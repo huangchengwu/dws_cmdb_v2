@@ -1,0 +1,5 @@
+FROM roffe/kubectl
+WORKDIR /
+COPY  .kube   /root/.kube/
+COPY package/linux/webshell  .
+ENTRYPOINT ["/webshell"]

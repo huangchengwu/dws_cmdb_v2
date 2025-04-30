@@ -1,0 +1,85 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify simpletags%}
+
+{% block extrahead %}{{ block.super }}
+
+
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+{{ media }}
+<style>
+    body {
+        color: green;
+        margin: 20px;
+    }
+
+    #chat-log {
+        margin: 0 auto;
+    }
+
+    #connect {
+        margin: 0 auto;
+    }
+
+    #chat-log a {
+        color: green;
+    }
+
+    .panel-body {
+        background-color: #000;
+    }
+</style>
+{% endblock %}
+{% block extrastyle %}{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}" />{% endblock %}
+{% block content %}
+
+<textarea id="chat-log" class="panel-body" cols="150" rows="40"></textarea><br>
+
+{{ Id|json_script:"Id" }}
+{{ Name|json_script:"Name" }}
+<script>
+    var Id = JSON.parse(document.getElementById('Id').textContent);
+    var Name = JSON.parse(document.getElementById('Name').textContent);
+    var chatLog = document.getElementById('chat-log');
+
+    const chatSocket = new WebSocket('ws://127.0.0.1:9091/ws/TaskCen/' + Id + '/');
+
+    chatSocket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+
+        chatLog.value = data.message;
+        chatLog.scrollTop = chatLog.scrollHeight;
+
+
+    };
+
+    chatSocket.onopen = function () {
+
+        chatSocket.send(JSON.stringify({
+            'Name': Name,
+            'Id': Id,
+        }));
+
+    };
+
+    chatSocket.onclose = function (e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    document.querySelector('#chat-message-input').focus();
+    document.querySelector('#chat-message-input').onkeyup = function (e) {
+        if (e.keyCode === 13) {
+            document.querySelector('#chat-message-submit').click();
+        }
+    };
+
+    document.querySelector('#chat-message-submit').onclick = function (e) {
+        const messageInputDom = document.querySelector('#chat-message-input');
+        const message = messageInputDom.value;
+        chatSocket.send(JSON.stringify({
+            'message': Name
+        }));
+        messageInputDom.value = '';
+    };
+</script>
+{% endblock %}

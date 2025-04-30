@@ -1,0 +1,203 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify simpletags%}
+{% block extrahead %}{{ block.super }}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+{{ media }}
+{% endblock %}
+{% block extrastyle %}{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}" />{% endblock %}
+
+<title>转</title>
+<style>
+    body {
+        color: #111;
+        margin: 20px;
+    }
+
+    #terminal-container {
+        margin: 0 auto;
+    }
+
+    #connect {
+        margin: 0 auto;
+    }
+
+    #terminal-container a {
+        color: #fff;
+    }
+
+    .panel-body {
+        background-color: #000;
+    }
+</style>
+
+{% block content %}
+
+
+<div class="panel panel-default">
+    <div class="panel-body">
+        <div id="terminal-container"></div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="/static/assets/css/xterm.css" />
+<link rel="stylesheet" href="/static/assets/css/bootstrap.min.css" />
+
+<script src="/static/assets/js/xterm.js"></script>
+<script src="/static/assets/js/jquery.min.js"></script>
+<script src="/static/assets/js/bootbox.min.js"></script>
+<script src="/static/assets/js/md5.js"></script>
+
+
+<script>
+    function GetQueryString(name) {
+
+
+
+
+
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+        var r = window
+            .location
+            .search
+            .substr(1)
+            .match(reg); //search,查询？后面的参数，并匹配正则
+        if (r != null)
+            return unescape(r[2]);
+        return null;
+    }
+
+
+    // 用户密码
+    var user_password = "XEFCJ9DeR7tZIMJy64";
+    // 密钥
+    var key = "iQoH1u3H+0R/BPqbSEE83MzbQHEinn8W8fWEzLpfuzP8EIF3Qa35mEd+Fe0tBCi2TUcKzIyOckFKsZ5ydJzKBQ==";
+    // 当前时间戳
+    var timestamp = Math.floor(Date.now() / 1000);
+    var timestampString = timestamp.toString();
+
+    // 拼接用户密码、密钥和时间戳
+    var data = user_password + "dws_cmdb" + key + timestamp + "@@";
+
+    // 计算MD5哈希值
+    var hash = md5(data);
+
+    // 构建JSON对象
+    var json = {
+        "hash": hash,
+        "timestamp": timestamp
+    };
+
+
+
+    var cols = parseInt(document.body.clientWidth / 9)
+    var rows = parseInt(document.body.clientHeight / 25)
+    var term = new Terminal({
+        "cursorBlink": true,
+        "rows": rows,
+        "cols": cols,
+        "rendererType": "canvas",
+        "experimentalCharAtlas": "webgl"
+
+    })
+    $("#connect_container").hide()
+    $("#drop_container").show()
+    container = document.getElementById('terminal-container');
+    Id = GetQueryString("Id")
+    var csrfToken = "{{ csrf_token }}";
+
+
+
+
+
+    $.ajax({
+        type: "GET",
+        url: '/ConfCen/HostConfig/' + Id + '/',
+        headers: {
+            'X-CSRFToken': csrfToken // 使用JavaScript变量添加CSRF令牌
+        },
+        cache: false,
+        dataType: "json",
+        data: {
+
+        },
+        success: function (msg) {
+            c = GetQueryString("Cmd")
+            cmd = c.split(',');
+
+            if (msg.types == "密钥") {
+                console.log("密钥登陆")
+                c = GetQueryString("Cmd")
+                    cmd = c.split(',');
+                    login = JSON.stringify({
+                        "Height": rows, "Width": cols, "LocalMode": "host_key", "Key": hash, "Timestamp": timestampString, "Username": msg.user, "Password": msg.password, "Host": msg.ip, "Cmd": cmd
+                        , "Host_key": msg.host_key
+                    })
+
+                
+            }else{
+                console.log("密码登陆")
+                c = GetQueryString("Cmd")
+                    cmd = c.split(',');
+                    login = JSON.stringify({
+                        "Height": rows, "Width": cols, "LocalMode": "ssh_password", "Key": hash, "Timestamp": timestampString, "Username": msg.user, "Password": msg.password, "Host": msg.ip+":"+msg.port, "Cmd": cmd,
+                    })
+
+                    
+
+
+            }
+            var socket = new WebSocket("ws://" + GetQueryString("ws") + ":3002");
+
+socket.onopen = function () {
+
+
+   
+
+    socket.send(login);
+
+
+
+
+};
+
+
+$("#terminal-container").html("")
+term.open(document.getElementById('terminal-container'));
+
+
+
+term.on('data', function (data) {
+    socket.send(data);
+});
+
+
+socket.onmessage = function (e) {
+
+    term.write(e.data);
+}
+socket.onclose = function (e) {
+    term.write("session is close");
+    $("#connect_container").show()
+    $("#drop_container").hide()
+}
+
+
+
+function ws_close() {
+    socket.close()
+}
+
+
+
+
+
+
+        }
+    });
+
+</script>
+
+
+
+{% endblock %}

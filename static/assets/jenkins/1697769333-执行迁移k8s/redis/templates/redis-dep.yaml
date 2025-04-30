@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  redis
+  namespace: {{ .Release.Namespace }}
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app:  redis
+  template:
+    metadata:
+      labels:
+        app:  redis
+    spec:
+      containers:
+        - name: redis
+          command: ["redis-server"]
+          args: ["--requirepass", "{{ .Values.password }}"]
+          image:  {{ .Values.image }}
+          env:
+            - name: TZ
+              value: Asia/Shanghai
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-pvc
+

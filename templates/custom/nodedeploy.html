@@ -1,0 +1,155 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list simpletags %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/assets/css/bootstrap.min.css">
+<script src="/static/assets/js/bootstrap.min.js"></script>
+
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    &times;
+                </button>
+                <h4 class="modal-title" id="myModalLabel">
+                    查看日志</a>
+                </h4>
+
+            </div>
+
+
+            <div class="modal-body">
+
+
+
+                <iframe id="myIframe" style="width: 100%; height: 600px;"></iframe>
+
+
+
+
+            </div>
+
+
+            <div class="modal-footer">
+
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+
+<form action="" method="post" onsubmit="return upaceContent()">
+    <textarea type="text" class="form-control" id="ace-editor-content" name="ace-editor-content" style="display: none;"
+        placeholder="请输入名称"></textarea>
+    {% csrf_token %}
+
+    {% for forms in form %}
+    <label>
+        <strong>{{ forms.label }}</strong>
+    </label>
+    <p>
+        <span>{{ forms.errors }}</span>
+    </p>
+    {{ forms }}
+    <br>
+    <br>
+
+    <style>
+        .float-right {
+            float: right;
+        }
+
+        .custom-button {
+    margin-right: 10px;  /* 设置按钮右侧的间距为 10 像素 */
+}
+    </style>
+
+    {% endfor %}
+
+
+   
+    
+ 
+    
+ 
+    <button type="sumbut" class="el-button el-button--primary float-right custom-button" >
+        <!---->
+        <!---->
+        <span>执行任务</span></button>
+
+      
+        
+    <button type="button" id="ping_host" name="model_test" data-toggle="modal" data-target="#myModal"  class="el-button el-button--primary float-right custom-button">
+        <!---->
+              <!---->
+              <span>测试主机[连通性] </span></button> &nbsp;
+      
+</form>
+ 
+
+
+
+
+ 
+
+
+<script>
+
+$("#ping_host").on("click", function () {
+    
+    var Id = $(this).val();
+
+// 获取 iframe 元素
+const iframe = document.getElementById("myIframe");
+
+iframe.src = "http://127.0.0.1/DeployCen/show_log/?job_name=exec_shell&job_id=8"
+
+// 在子窗口中执行脚本（例如获取子窗口的标题）
+iframe.onload = function () {
+    const subWindow = iframe.contentWindow;
+    const pageTitle = subWindow.document.title;
+    console.log(pageTitle);
+};
+
+    return ;
+
+        var Id = $("#id_select_Custom_Env option:selected").val();
+
+
+        if (Id != "") {
+
+            $.ajax({
+                type: "GET",
+                url: '/ConfCen/Custom_Env/' + Id + '/',
+                headers: {
+                    'X-CSRFToken': csrfToken // 使用JavaScript变量添加CSRF令牌
+                },
+
+                cache: false,
+                dataType: "json",
+                data: {
+
+                },
+                success: function (msg) {
+
+                    editor.getSession().setValue(msg.config);
+
+
+
+
+                }
+            });
+
+        } else {
+            editor.getSession().setValue("");
+
+        }
+
+
+    });
+
+</script>
+{% endblock %}

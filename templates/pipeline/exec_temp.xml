@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+    parameters {
+    stashedFile 'stashedFile'
+    stashedFile 'private_key'
+    string(name: 'temp_name', defaultValue: 'ping_server.yaml',description:'temp_name')
+    }
+    stages {
+        stage('上传文件处理') {
+            steps {            
+                script {                 
+                    try {
+                        unstash 'stashedFile'
+                        unstash 'private_key'
+
+                        
+
+                        sh '''                                             
+                         
+                           mkdir -p task_${BUILD_ID}/
+                           mv  stashedFile task_${BUILD_ID}/hosts
+                         
+                        '''
+                    } catch (Exception e) {
+                        echo "Failed to unstash: ${e.getMessage()}"
+                        // Add appropriate exception handling here
+                    }
+                }
+                
+
+                sh '''            
+                    
+                               
+                        ls -l task_${BUILD_ID}/${Filename}/
+                       sudo ansible-playbook -i task_${BUILD_ID}/hosts /dws_cmdb/templates/pipeline/${temp_name} -v
+
+                '''
+                
+            }
+        }
+        
+      
+    }
+}

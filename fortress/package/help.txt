@@ -1,0 +1,7 @@
+使用说明
+
+http://127.0.0.1:8080/?Username=root&Password=Odej7fvOsYh@jh0nR0sa&Host=127.0.0.1:22&Cmd=/bin/bash&ws=127.0.0.1
+
+
+
+http://127.0.0.1:8080?Username=root&Password=Odej7fvOsYh@jh0nR0sa&Host=172.16.0.144:22&Cmd=/bin/bash&ws=127.0.0.1

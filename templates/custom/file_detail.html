@@ -1,0 +1,17 @@
+
+{% if file_content %}
+    <pre>{{ file_content }}</pre>
+{% elif file_list %}
+
+<ul>
+    {% for file in file_list %}
+        <li><a href="{{ file }}/">{{ file }}</a></li>
+    {% endfor %}
+    </ul>
+    
+
+
+   
+{% else %}
+    <p>空目录</p>
+{% endif %}

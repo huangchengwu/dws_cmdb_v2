@@ -1,0 +1,127 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="/static/css/xterm.css" />
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+    <script src="/static/js/xterm.js"></script>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <title>{{ .Title }}</title>
+    <style>
+        body {
+            color: #111;
+            margin: 20px;
+        }
+
+        #terminal-container {
+            margin: 0 auto;
+        }
+
+        #connect {
+            margin: 0 auto;
+        }
+
+        #terminal-container a {
+            color: #fff;
+        }
+
+        .panel-body {
+            background-color: #000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <div id="terminal-container"></div>
+        </div>
+    </div>
+    <script src="/static/assets/js/md5.js"></script>
+
+
+    <script>
+        function GetQueryString(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+            var r = window
+                .location
+                .search
+                .substr(1)
+                .match(reg); //search,查询？后面的参数，并匹配正则
+            if (r != null)
+                return unescape(r[2]);
+            return null;
+        }
+
+
+        // 用户密码
+        var user_password = "";
+        // 密钥
+        var key = "i==";
+        // 当前时间戳
+        var timestamp = Math.floor(Date.now() / 1000);
+        var timestampString = timestamp.toString();
+
+        // 拼接用户密码、密钥和时间戳
+        var data = user_password + "dws_cmdb" + key + timestamp + "@@";
+        console.log("data===" + data);
+        // 计算MD5哈希值
+        var hash = md5(data);
+        console.log("MD5哈希值: " + hash);
+
+        // 构建JSON对象
+        var json = {
+            "hash": hash,
+            "timestamp": timestamp
+        };
+        console.log("JSON: " + JSON.stringify(json));
+
+
+
+        var cols = parseInt(document.body.clientWidth / 9)
+        var rows = parseInt(document.body.clientHeight / 25)
+        var term = new Terminal({ "cursorBlink": true, "rows": rows, "cols": cols })
+
+        $("#connect_container").hide()
+        $("#drop_container").show()
+        container = document.getElementById('terminal-container');
+
+        var socket = new WebSocket("ws://" + GetQueryString("ws") + ":3002");
+
+        socket.onopen = function () {
+            c = GetQueryString("Cmd")
+            cmd = c.split(',');
+            login = JSON.stringify({ "Height": rows, "Width": cols, "LocalMode": GetQueryString("LocalMode"), "Key": hash , "Timestamp":  timestampString, "Username": GetQueryString("Username"), "Password": GetQueryString("Password"), "Host": GetQueryString("Host"), "Cmd": cmd })
+
+            socket.send(login);
+
+
+
+        };
+
+        $("#terminal-container").html("")
+        term.open(document.getElementById('terminal-container'));
+
+        term.on('data', function (data) {
+            socket.send(data);
+        });
+        socket.onmessage = function (e) {
+
+            term.write(e.data);
+        }
+        socket.onclose = function (e) {
+            term.write("session is close");
+            $("#connect_container").show()
+            $("#drop_container").hide()
+        }
+
+
+
+        function ws_close() {
+            socket.close()
+        }
+    </script>
+</body>
+
+</html>

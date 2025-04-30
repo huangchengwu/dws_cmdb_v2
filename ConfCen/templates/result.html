@@ -1,0 +1,159 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify simpletags%}
+
+{% block extrahead %}{{ block.super }}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+{{ media }}
+
+{% endblock %}
+{% block extrastyle %}{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}" />{% endblock %}
+{% block content %}
+<div id="content-main" class="form-main">
+
+
+
+
+
+
+
+    <form action="" method="post" id="env_form" novalidate=""><input type="hidden" name="csrfmiddlewaretoken"
+            value="ndL8tYrzNSSCO2YKPRmPTl84kKHQUkIsW8hxax6nk7BBmZ4jFh5ZqMsoMrxt9m31">
+        <div>
+
+
+
+
+
+
+
+
+            <fieldset class="module aligned ">
+
+
+
+                <div class="form-row field-name">
+
+
+                    <div>
+
+
+                        <label for="id_name">执行任务: init初始化</label>
+
+
+
+
+
+                    </div>
+
+                </div>
+
+                <div class="form-row field-config">
+
+
+                    <div>
+
+
+                        <label class="required" for="id_config">结果:</label>
+                        <pre id="code" style="min-height:500px;width: 1200px;">{{ result }}</pre>
+
+
+                    </div>
+
+
+            </fieldset>
+
+
+
+
+
+
+
+
+
+
+
+
+            <div class="submit-row"><button type="button" class="el-button el-button--button el-button--small"
+                    onclick="prev()" style="float: left; margin-right: 10px; margin-bottom: 10px;"><!----><i
+                        class="el-icon-arrow-left"></i><span><span>返回</span></span></button> </div>
+            <script type="text/javascript">
+                var submitrows = document.getElementsByClassName('submit-row');
+                function del(url) {
+                    window.location.href = url;
+                }
+                function prev() {
+                    window.location.href = '/admin/ConfCen/env/'
+                }
+
+                for (var i = 0; i < submitrows.length; i++) {
+                    new Vue({
+                        el: submitrows[i],
+                        data: {},
+                        methods: {
+                            formSubmit: function (name, v, e) {
+                                $("#actionName").attr('name', name).val(v);
+                                $("form").submit();
+                            }
+                        }
+                    })
+                }
+
+            </script>
+
+            <script src="{%static 'assets/ace/1.4.6/ace.js'%}"></script>
+            <script src="{%static 'assets/ace/1.4.6/ext-beautify.js'%}"></script>
+            <script src="{%static 'assets/ace/1.4.6/ext-language_tools.js'%}"></script>
+            <script src="https://cdn.bootcdn.net/ajax/libs/ace/1.18.0/"></script>
+            <script src="{%static 'assets/ace/1.4.6/mode-sh.js'%}"></script>
+
+
+            <script src="{%static 'assets/ace/1.4.6/theme-monokai.js'%}"></script>
+            <script>
+                var editor = ace.edit('code');// 这个地方就是id是editor的div
+                editor.setTheme('ace/theme/monokai'); //主题
+                var jsMode = ace.require('ace/mode/mode-sh').Mode; //支持语言
+                editor.session.setMode(new jsMode());    //引入
+                editor.setFontSize(18);    //设置默认标签大小
+                editor.setReadOnly(false);        //false为可编辑
+                editor.setOption("wrap", "free");   //换行
+                ace.require("ace/ext/language_tools");
+                editor.setOptions({
+                    enableBasicAutocompletion: true, //启用基本自动完成
+                    enableSnippets: true,             //启用代码段
+                    enableLiveAutocompletion: true    //启用实时自动完成
+
+                });
+
+
+
+
+
+                function upconfig() {
+                    $("#form").append('<textarea name="config" rows="10" cols="40" id="id_Describe"  style="display:none">' + editor.getValue() + '</textarea>')
+
+                }
+
+
+
+
+            </script>
+
+
+
+            <script type="text/javascript" id="django-admin-form-add-constants" src="/static/admin/js/change_form.js">
+            </script>
+
+
+
+
+            <script type="text/javascript" id="django-admin-prepopulated-fields-constants"
+                src="/static/admin/js/prepopulate_init.js" data-prepopulated-fields="[]">
+                </script>
+
+
+        </div>
+    </form>
+
+</div>
+{% endblock %}

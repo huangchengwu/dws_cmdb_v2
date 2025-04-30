@@ -1,0 +1,86 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify simpletags%}
+{% block extrahead %}{{ block.super }}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+{{ media }}
+{% endblock %}
+{% block extrastyle %}{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}" />{% endblock %}
+{% block content %}
+<style>
+  body {}
+
+  #chat-log {}
+
+  #connect {}
+
+  #chat-log a {
+    color: green;
+  }
+
+  .panel-body {
+    background-color: #000;
+    color: green;
+    margin: 20px;
+    margin: 0 auto;
+
+  }
+</style>
+<div class="page-header">
+  <div class="el-page-header">
+    <div class="el-page-header__left"><i class="el-icon-back"></i>
+      
+      <a class="el-page-header__title" href="/admin/DeployCen/taskdeploy/">返回</a>
+      
+    
+    </div>
+    <div id="title_task" class="el-page-header__content"> </div>
+  </div>
+</div>
+<br>
+<br>
+<textarea id="chat-log" class="panel-body" cols="150" rows="40"></textarea><br>
+
+<script>
+  function back() {
+    history.back();
+
+  }
+
+  var title_task = document.getElementById('title_task');
+
+  var chatLog = document.getElementById('chat-log');
+  var interval;
+  function delayedRequest() {
+    var Id = "{{ Id }}";
+
+
+    $.ajax({
+      type: "get",
+      url: '/DeployCen/TaskDeploy/' + Id + '/task_log/',
+      cache: false,
+      dataType: "json",
+      data: {},
+      success: function (msg) {
+        title_task.innerHTML = "任务 : " + msg.log_id
+        chatLog.value = msg.get_build_info;
+        chatLog.scrollTop = chatLog.scrollHeight;
+       
+
+
+
+      }
+    });
+  }
+  delayedRequest()
+  var interval = setInterval(function () {
+    setTimeout(delayedRequest, 1000);
+  }, 1000);
+
+
+
+
+
+</script>
+
+{% endblock %}

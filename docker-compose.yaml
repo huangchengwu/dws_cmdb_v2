@@ -1,0 +1,38 @@
+version: '3'
+services:
+  redis-svc:
+    image: 'redis:7.2.1'
+    restart: always
+    ports:
+      - "6379:6379"
+    environment:
+      - TZ=Asia/Shanghai
+    command: redis-server --requirepass "kG6hk88hwAHtjP^w"
+  dws_cmdb-celery:
+    image: huangchengwu6904/hi-app:dws_cmdb-base
+    restart: always
+    command: ["/bin/sh","-c","make  dev celery"]
+    depends_on:
+      - redis-svc
+    links:
+      - redis-svc
+    volumes:
+      - .:/dws_cmdb
+      - ./uploads:/uploads
+  dws_cmdb-svc:
+    image: huangchengwu6904/hi-app:dws_cmdb-base
+    restart: always
+    depends_on:
+      - redis-svc
+    links:
+          - redis-svc
+
+    ports:
+      - "80:8000"
+    volumes:   
+      - .:/dws_cmdb
+      - /data:/data
+      - /uploads:/uploads
+      - /var/lib/jenkins/jobs:/dws_cmdb/static/assets/jenkins
+
+

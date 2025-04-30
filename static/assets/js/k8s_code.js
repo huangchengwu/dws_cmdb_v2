@@ -1,0 +1,8 @@
+$('#history_table').DataTable()
+$('#create_table').DataTable()
+$('#pod_table').DataTable()
+$('#dep_table').DataTable()
+$('#svc_table').DataTable()
+$('#deloy_server').DataTable()
+$('#update_server').DataTable()
+$('#domain_table').DataTable()

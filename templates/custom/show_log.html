@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8"> 
+	<title>查看日志</title>
+	<link rel="stylesheet" href="/static/assets/css/bootstrap.min.css">  
+	<script src="/static/assets/js/jquery.min.js"></script>
+	<script src="/static/assets/js/bootstrap.min.js"></script>
+	<script src="/static/admin/simpleui-x/js/vue.min.js"></script>
+	<script src="/static/assets/js/axios.min.js"></script>
+
+
+</head>
+<body>
+
+ 
+
+ 
+    <style>
+        
+       
+        #chat-log a {
+            color: green;
+        }
+
+        .panel-body {
+            background-color: #000;
+            color: green;
+            margin: 20px;
+            margin: 0 auto;
+            resize: none;
+
+
+        }
+    </style>
+
+    
+
+    {% verbatim %}
+  
+      
+
+    <textarea id="chat-log" ref="chatLog" class="panel-body" cols="150" rows="40"> {{ message }}</textarea><br>
+
+    {% endverbatim %}
+     <script src="/static/assets/js/axios.min.js"></script>
+
+    <script>
+        function back() {
+            history.back();
+
+        }
+        new Vue({
+            data() {
+                return {
+                    message: '',
+                   
+                };
+            },
+            created() {
+
+                var chatLog;
+
+              
+                this.socket = new WebSocket('ws://{{  CMDB_DOMAIN }}/ws/TaskCen/' + this.Id + '/');
+                this.socket.onmessage = (e) => {
+
+                    d = JSON.parse(e.data);
+                    if (d.status == "ABORTED" || d.status == "FAILURE" || d.status == "SUCCESS") {
+
+                        clearInterval(this.intervalId);
+
+                    }
+                    this.message = d.log;
+                    自动滚轮
+                    this.scrollToBottom();
+
+
+                };
+                this.startInterval();
+            },
+            methods: {
+                scrollToBottom() {
+                    this.$nextTick(() => {
+                        const chatLog = this.$refs.chatLog;
+                        chatLog.scrollTop = chatLog.scrollHeight;
+                    });
+                },
+                delayedRequest() {
+                    var jsonData = {
+                        job_name: "{{  job_name }}",
+                        job_id: "{{  job_id }}",
+
+                    };
+                    
+                    this.socket.send(JSON.stringify(jsonData));
+                },
+
+                startInterval() {
+                    this.intervalId = setInterval(() => {
+                        setTimeout(() => {
+                            this.delayedRequest();
+                        }, 500);
+                    }, 500);
+                }
+            }
+        }).$mount('#chat-log');
+
+
+
+    </script>

@@ -1,0 +1,390 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list simpletags %}
+{% load custom_tags %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/assets/css/bootstrap.min.css">
+
+<script src="/static/assets/js/bootstrap.min.js"></script>
+
+
+<script src="/static/assets/js/ace.js"></script>
+<script src="/static/assets/js/mode-yaml.js"></script>
+<script src="/static/assets/js/theme-twilight.js"></script>
+
+<link href="/static/assets/select2/dist/css/select2.min.css" rel="stylesheet" />
+
+
+<script src="/static/assets/select2/dist/js/select2.min.js"></script>
+<style>
+    ul {
+        padding-left: 20px;
+        color: #333;
+    }
+
+    li {
+        margin-bottom: 5px;
+
+    }
+
+    .dynamic-content h1 {
+        font-size: 16px;
+        /* 调整为合适的大小 */
+        margin: 0;
+        /* 移除默认的外边距 */
+        line-height: 1.2;
+        /* 调整行高 */
+    }
+</style>
+
+
+
+
+
+
+
+
+{% verbatim %}
+
+
+<div id="chat-log">
+
+    <div class="modal fade" id="showLog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        查看日志｜<a ref="showLogAll" href="" target="_blank">详细查看</a>
+                    </h4>
+
+                </div>
+
+
+                <div class="modal-body">
+
+
+
+                    <iframe ref="myIframe" style="width: 100%; height: 600px;"></iframe>
+
+
+
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+
+    <div class="dropdown">
+        <select v-model="selectedGroup" @change="fetchGroupData">
+            <option v-for="group in groups" :key="group" :value="group">{{ group }}</option>
+        </select>
+
+
+
+
+
+        <a href="/admin/ProjManage/projdep/add/" style="float: right;">
+            <i class="fas fa-plus"></i> 创建项目
+        </a>
+    </div>
+    <br>
+    <br>
+
+
+
+    <table class="table" id="tasklist">
+
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>项目名字</th>
+                <th>时间=版本号</th>
+                <th>项目组</th>
+
+                <th>日志收集</th>
+                <th>查看空间</th>
+                <th>相关信息</th>
+                <th>按钮</th>
+                <th>操作</th>
+
+
+            </tr>
+        </thead>
+        <tbody>
+
+
+            <tr v-for="site in filteredMessage" :key="site.pk">
+                <td><a :href="`/admin/ProjManage/projdep/${site.pk}/change/`">{{ site.pk }}</a></td>
+                <td>{{ site.fields.name }}</td>
+                <td>{{ formatDate(site.fields.cid) }}</td>
+                <td>{{ site.fields.Group }}</td>
+                <td>
+
+
+                    <a :value="site.fields.logid" name="showLog" data-toggle="modal" data-target="#showLog"
+                        @click="handleButtonClick(site.fields.log_id)">查看日志</a>
+                </td>
+                <td> <a style="color: #409eff;" @click="openWorkspace(site.fields.cid, site.fields.task_name)">查看空间
+                    </a> </td>
+
+                <td v-html="describe['describe_' + site.pk]" class="dynamic-content"></td>
+
+
+                <td>
+                    <button :disabled="buttonClicked" type="button"
+                        class="el-button el-button--primary el-button--small"
+                        v-for="(value, key) in buttonItems[site.pk]" :key="key" :value="value"
+                        @click="handleTaskEncExec(site.pk,key)"><i :class="value"></i><span> {{ key }}</span></button>
+                      
+
+
+                </td>
+                <td>
+                    <a :href="`/admin/ProjManage/projdep/${site.pk}/change/`" type="button"><i class="fas fa-edit"></i>
+                        &nbsp; 修改</a>
+                    &nbsp;&nbsp;
+
+
+                    <a :href="`/admin/ProjManage/projdep/${site.pk}/delete/`" onclick="return confirm('确定要删除吗？');"
+                        type="button"><i class="fas fa-trash-alt"></i> &nbsp; 删除</a>
+
+
+                </td>
+            </tr>
+
+
+
+        </tbody>
+    </table>
+
+
+</div>
+
+
+
+{% endverbatim %}
+<script src="https://cdn.jsdelivr.net/npm/date-fns@4.1.0/cdn.min.js"></script>
+<script src="/static/assets/dws_cmdb_js/cmdb_select.js"></script>
+<script src="/static/assets/dws_cmdb_js/function.js"></script>
+<script src="/static/assets/js/axios.min.js"></script>
+
+
+
+<script>
+
+    var tasklist = {{ tasklist_json| safe }};
+    var workspace = {{ workspace| safe }};
+
+    var describe = {{ describe| safe }};
+
+
+    var button = {{ button| safe }};
+
+   
+    var csrfToken = "{{ csrf_token }}";
+
+    new Vue({
+        el: '#chat-log',
+        data() {
+            return {
+                // 示例按钮数据
+                buttonItems: button,
+                buttonClicked: false,
+                describe,
+                message: tasklist,
+                selectedGroup: null,
+                csrfToken: csrfToken,
+                groups: [],  // 初始化组列表
+                filteredMessage: []  // 初始化过滤后的消息
+
+            };
+        },
+        mounted() {
+            this.initGroups();
+        },
+        methods: {
+            formatDate(timestamp) {
+            
+  
+                return dateFns.format(new Date(timestamp * 1000), 'yyyy-MM-dd HH:mm:ss')+"="+timestamp;
+            },
+            openWorkspace(cid, name) {
+                // 构建要打开的 URL
+                if (workspace.status == "1") {
+                    url = "#"
+                    alert("无权限查看空间");
+                } else {
+                    url = `http://cmdb.keli.vip:9999/?password=8a0501a0b53ca58f60a7b0fd&folder=/var/lib/jenkins/workspace/${cid}-${name}/`;
+                    window.open(url, '_blank');
+                }
+                // 使用 window.open 打开新窗口
+
+            },
+            handleButtonClick(logid) {
+
+                // 获取 iframe 和链接元素
+                const iframe = this.$refs.myIframe;
+                const showLogAll = this.$refs.showLogAll;
+
+                // 更新链接和 iframe 的 src
+                const url = `/DeployCen/show_task/?Id=${logid}`;
+
+                showLogAll.href = url;
+                iframe.src = url;
+
+                // 监听 iframe 的加载事件
+                iframe.onload = () => {
+                    try {
+                        const subWindow = iframe.contentWindow;
+                        const pageTitle = subWindow.document.title;
+
+                    } catch (error) {
+                        console.error('Error accessing iframe content:', error);
+                    }
+                };
+            },
+
+
+            handleTaskEncExec(buttonValue, key) {
+                alert('执行任务', buttonValue);
+
+                this.buttonClicked = true;
+
+                // 使用 fetch API 发起请求
+                fetch(`/ProjManage/Projdep/${buttonValue}/TaskEnc_exec/`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.csrfToken
+                    },
+                    body: JSON.stringify({ action: key })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+
+
+                        for (index in this.filteredMessage) {
+
+                            if (this.filteredMessage[index].pk == buttonValue) {
+
+                                this.filteredMessage[index].fields.cid = data.version;
+                                this.filteredMessage[index].fields.log_id = data.log_id;
+
+                            }
+                        }
+
+
+                        this.buttonClicked = false;
+
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('执行失败');
+                        this.buttonClicked = false;
+
+                    })
+                    .finally(() => {
+
+                        this.buttonClicked = false;
+
+
+                    });
+            },
+
+
+
+
+
+            sortGroups(groups) {
+                return groups.sort((a, b) => {
+                    const isFormalA = a.includes("正式");
+                    const isFormalB = b.includes("正式");
+
+                    if (isFormalA && !isFormalB) {
+                        return 1; // a 在 b 之后
+                    } else if (!isFormalA && isFormalB) {
+                        return -1; // a 在 b 之前
+                    } else {
+                        return 0; // 保持原有顺序
+                    }
+                });
+            },
+            initGroups() {
+                // 初始化组列表
+                this.groups = this.sortGroups([...new Set(this.message.map(item => item.fields.Group))]);
+
+                s = localStorage.getItem('selectedGroup');
+
+                if (s != null) {
+
+                    this.selectedGroup = s;
+                    this.fetchGroupData();
+
+
+
+                } else {
+                    if (this.groups.length > 0) {
+
+                        this.selectedGroup = this.groups[0];
+                        this.fetchGroupData();
+
+                    }
+                }
+
+
+
+            },
+
+            fetchGroupData() {
+                localStorage.setItem('selectedGroup', this.selectedGroup);
+
+                this.filteredMessage = this.message.filter(item => item.fields.Group === this.selectedGroup);
+
+
+
+            }
+        }
+    });
+
+
+</script>
+<!-- <script>
+    $('button[name="configModal"]').click(function () {
+
+        var Id = $(this).val();
+
+        // 获取 iframe 元素
+        const iframe = document.getElementById("myIframe");
+        var show_log_all = document.getElementById("show_log_all");
+
+        show_log_all.href = "/admin/ConfCen/webhook/49/change/";
+        // 加载并访问网页
+        iframe.src = "www.baidu.com";
+
+        // 在子窗口中执行脚本（例如获取子窗口的标题）
+        iframe.onload = function () {
+            const subWindow = iframe.contentWindow;
+            const pageTitle = subWindow.document.title;
+            console.log(pageTitle);
+        };
+
+    });
+
+</script> -->
+
+<link rel="stylesheet" type="text/css" href="{% static 'assets/css/jquery.dataTables.css' %}" />
+<script src="{%static 'assets/js/jquery.dataTables.js'%}"></script>
+
+
+
+{% endblock %}

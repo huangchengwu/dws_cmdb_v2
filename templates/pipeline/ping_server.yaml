@@ -1,0 +1,5 @@
+- name:  主机检测
+  hosts: all 
+  tasks:
+    - name: 主机检测
+      ping:

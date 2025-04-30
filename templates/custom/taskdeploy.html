@@ -1,0 +1,729 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list simpletags %}
+{% load custom_tags %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/assets/css/bootstrap.min.css">
+
+<script src="/static/assets/js/bootstrap.min.js"></script>
+
+
+<script src="/static/assets/js/ace.js"></script>
+<script src="/static/assets/js/mode-yaml.js"></script>
+<script src="/static/assets/js/theme-twilight.js"></script>
+
+<link href="/static/assets/select2/dist/css/select2.min.css" rel="stylesheet" />
+
+
+<script src="/static/assets/select2/dist/js/select2.min.js"></script>
+
+
+<style>
+    .select2-container .select2-selection--single {
+        height: 30px;
+        /* 设置高度为 40 像素 */
+    }
+
+    .select2-search__field {
+        height: 30px;
+        /* 设置搜索框的高度为 40px */
+    }
+
+    .select2-container--default .select2-results>.select2-results__options {
+        max-height: 597px;
+
+    }
+</style>
+
+
+<div class="float-right">
+    <a id="helpDoc" href="/admin/Doc/helpdocuments">帮助文档</a> |
+    <a id="taskcreateConfCen" href="/admin/ConfCen/taskcreate/">任务修改</a>|
+    {% if perms.ConfCen.add_webhook %}
+    <a onclick="Webhook()" href="#">Webhook生成</a>
+
+    {% endif %}
+    {% if perms.ConfCen.add_autotaskcreate %}
+    |<a id="taskcreateConfCen" href="/admin/ConfCen/autotaskcreate/">一键新增任务</a>|
+
+    {% endif %}
+
+    <a id="taskcreateConfCen"   href="/admin/DeployCen/taskdeploy/?log=all" onclick="log_show()">查看所有日志</a>
+
+</div>
+<script>
+    function log_show(){
+        alert("查看所有日志请等待   ")
+    }
+</script>
+<form action="" method="post" onsubmit="return upaceContent()">
+    <textarea type="text" class="form-control" id="ace-editor-content" name="ace-editor-content" style="display: none;"
+        placeholder="请输入名称"></textarea>
+    {% csrf_token %}
+
+    {% for from in froms %}
+    <label>
+        <strong>{{ from.label }}</strong>
+    </label>
+    <p>
+        <span>{{ from.errors }}</span>
+    </p>
+    {{ from }}
+    <br>
+    <br>
+
+    <style>
+        .float-right {
+            float: right;
+        }
+
+        .hei {
+            height: 300px;
+
+            width: 500px;
+        }
+    </style>
+
+    {% endfor %}
+
+
+    <div id="ace-editor" class="hei"></div>
+
+    <br>
+    <button type="sumbut" class="el-button el-button--primary float-right">
+        <!---->
+        <!---->
+        <span>执行任务</span></button>
+
+    <br>
+    <br>
+
+</form>
+
+
+{% verbatim %}{% endverbatim %}
+
+<br>
+<br>
+
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    &times;
+                </button>
+                <h4 class="modal-title" id="myModalLabel">
+                    查看日志｜<a id="show_log_all" href="">详细查看</a>
+                </h4>
+
+            </div>
+
+
+            <div class="modal-body">
+
+
+
+                <iframe id="myIframe" style="width: 100%; height: 600px;"></iframe>
+
+
+
+
+            </div>
+
+
+            <div class="modal-footer">
+
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+
+
+
+
+<div class="row">
+    <h1>一次性任务</h1><br><br> 
+    <table id="tasklist" class="row">
+
+        <thead>
+
+            <tr>
+
+
+
+
+
+                <th scope="col">任务id</th>
+
+                <th scope="col">任务名</th>
+
+
+
+                <th scope="col">压缩包</th>
+                <th scope="col">任务类型</th>
+                <th scope="col">form_HostGroup</th>
+             
+                <th scope="col">form_k8s_Env</th>
+
+                <th scope="col">select_Custom_Env</th>
+
+                <th scope="col">创建时间</th>
+                <th scope="col">更新时间</th>
+                <th scope="col">创建用户</th>
+                <th scope="col">查看空间</th>
+
+                <th scope="col">任务日志</th>
+              
+                <th scope="col">其他操作</th>
+
+            </tr>
+        </thead>
+        <tbody>
+
+
+            {% for t in tasklist %}
+            {% if t.task_type.types == "一次性" %}
+
+            <tr>
+
+                <td>{{ t.Id }}</td>
+                <td><a 
+                    href='/DeployCen/show_work_dir/?Id={{ t.Id }}'>{{ t.taskdeploy_env }}</a></td>
+
+
+
+                <td><a href="/uploads/package/{{ t.version }}-{{ t.taskdeploy_env }}.zip">{{ t.version }}</a></td>
+                <td>{{ t.task_type }}</td>
+                <td>{{ t.select_HostGroup }}</td>
+                <td>{{ t.select_k8s_Env }}</td>
+                <td>{{ t.select_Custom_Env }}</td>
+
+
+                
+
+                <td>{{ t.created_at }}</td>
+                <td>{{ t.updated_at }}</td>
+                <td>{{ t.User }} </td>
+
+                <td>
+                    <!-- <button class="btn"
+                        onclick="window.location.href='/DeployCen/show_work_dir/?Id={{ t.Id }}'">查看空间</button> -->
+                        <button class="btn" onclick="window.open('http://{{ CMDB_DOMAIN }}:9999/?password=8a0501a0b53ca58f60a7b0fd&folder=/var/lib/jenkins/workspace/{{ t.version }}-{{ t.taskdeploy_env }}/')">查看空间</button>
+
+                </td>
+
+
+
+
+
+
+                <td>
+                    <button class="btn" value="{{ t.Id }}" name="model_test" data-toggle="modal" data-target="#myModal">
+                        查看日志
+                    </button>
+
+
+                </td>
+              
+
+                <td>
+                    {% get_rollBack_type t.taskdeploy_env as rollback_type %}
+                    {% if rollback_type == "是" %}
+                    {% if perms.DeployCen.change_taskdeploy %}
+
+                    <button type="button" name="task_rollback" value="{{ t.Id }}" class="el-button"><!----><i
+                            class="el-icon-connection"></i><span>回滚任务</span></button><br>
+                    {% endif %}
+
+                    {% endif %}
+                    {% if perms.DeployCen.delete_taskdeploy %}
+
+                    <button type="button" name="task_disable" value="{{ t.Id }}" class="el-button"><!----><i
+                            class="el-icon-delete"></i><span>删除任务</span></button>
+
+                    {% endif %}
+
+                </td>
+
+
+                </td>
+
+
+            </tr>
+            {% endif %}
+
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<br><br>
+
+<div class="row">
+    <h1>周期性任务</h1><br><br>
+    <table id="tasklist_crontab" class="row">
+
+        <thead>
+
+            <tr>
+
+
+
+
+
+                <th scope="col">任务id</th>
+
+                <th scope="col">任务名</th>
+
+
+
+                <th scope="col">压缩包</th>
+                <th scope="col">任务类型</th>
+                <th scope="col">form_HostGroup</th>
+                <th scope="col">form_k8s_Env</th>
+                <th scope="col">select_Custom_Env</th>
+               
+                <th scope="col">创建时间</th>
+                <th scope="col">更新时间</th>
+                <th scope="col">创建用户</th>
+                <th scope="col">查看空间</th>
+
+                <th scope="col">任务日志</th>
+            
+                <th scope="col">其他操作</th>
+
+            </tr>
+        </thead>
+        <tbody>
+
+
+            {% for t in tasklist %}
+            {% if t.task_type.types == "周期性" %}
+            <tr>
+
+                <td>{{ t.Id }}</td>
+                <td><a 
+                    href='/DeployCen/show_work_dir/?Id={{ t.Id }}'>{{ t.taskdeploy_env }}</a></td>
+
+
+
+                <td><a href="/uploads/package/{{ t.version }}-{{ t.taskdeploy_env }}.zip">{{ t.version }}</a></td>
+                <td>{{ t.task_type }}</td>
+                <td>{{ t.select_HostGroup }}</td>
+                <td>{{ t.select_k8s_Env }}</td>
+                <td>{{ t.select_Custom_Env }}</td>
+
+                
+
+                <td>{{ t.created_at }}</td>
+                <td>{{ t.updated_at }}</td>
+                <td>{{ t.User }} </td>
+
+                <td>
+                    <!-- <button class="btn"
+                        onclick="window.location.href='/DeployCen/show_work_dir/?Id={{ t.Id }}'">查看空间</button> -->
+                        <button class="btn" onclick="window.open('http://{{ CMDB_DOMAIN }}:9999/?password=8a0501a0b53ca58f60a7b0fd&folder=/var/lib/jenkins/workspace/{{ t.version }}-{{ t.taskdeploy_env }}/')">查看空间</button>
+
+
+                </td>
+
+
+
+
+
+
+                <td>
+                    <button class="btn" value="{{ t.Id }}" name="model_test" data-toggle="modal" data-target="#myModal">
+                        查看日志
+                    </button>
+
+
+                </td>
+                
+
+                <td>
+
+
+
+
+                    {% get_rollBack_type t.taskdeploy_env as rollback_type %}
+
+                    {% if rollback_type == "是" %}
+                    {% if perms.DeployCen.change_taskdeploy %}
+
+                    <button type="button" name="task_rollback" value="{{ t.Id }}" class="el-button"><!----><i
+                            class="el-icon-connection"></i><span>回滚任务</span></button><br>
+                    {% endif %}
+
+                    {% endif %}
+
+                    {% if perms.DeployCen.delete_taskdeploy %}
+                   
+                    <button type="button" name="task_disable" value="{{ t.Id }}" class="el-button"><!----><i
+                            class="el-icon-delete"></i><span>删除任务</span></button>
+
+
+                    {% endif %}
+
+
+                </td>
+
+
+                </td>
+
+
+            </tr>
+            {% endif %}
+
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+
+<br><br>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="{% static 'assets/css/jquery.dataTables.css' %}" />
+<script src="{%static 'assets/js/jquery.dataTables.js'%}"></script>
+
+
+
+
+<script>
+    $('button[name="model_test"]').click(function () {
+        var Id = $(this).val();
+
+        // 获取 iframe 元素
+        const iframe = document.getElementById("myIframe");
+        var show_log_all = document.getElementById("show_log_all");
+
+        show_log_all.href = "/DeployCen/show_task/?Id=" + Id;
+        // 加载并访问网页
+        iframe.src = "/DeployCen/show_task/?Id=" + Id;
+
+        // 在子窗口中执行脚本（例如获取子窗口的标题）
+        iframe.onload = function () {
+            const subWindow = iframe.contentWindow;
+            const pageTitle = subWindow.document.title;
+            console.log(pageTitle);
+        };
+
+    });
+
+</script>
+
+
+
+
+
+<script>
+    var csrfToken = "{{ csrf_token }}";
+
+    var editor = ace.edit('ace-editor');
+    ace.config.set('basePath', 'https://unpkg.com/ace-builds@1.4.6/src-noconflict');
+    // 设置语言和主题
+    editor.session.setMode('ace/mode/yaml');
+    editor.setTheme('ace/theme/twilight');
+
+
+
+    $('#id_taskdeploy_env').select2();
+
+
+
+    function get_random_password(length) {
+        const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let token = '';
+        for (let i = 0; i < length; i++) {
+            const randomIndex = Math.floor(Math.random() * characters.length);
+            token += characters.charAt(randomIndex);
+        }
+        return token;
+    }
+
+    $('#tasklist').DataTable({
+        "order": [[0, "desc"]]
+
+
+    })
+
+    $('#tasklist_crontab').DataTable({
+        "order": [[0, "desc"]]
+
+
+    })
+
+
+
+    function upaceContent() {
+
+        msg = editor.getSession().getValue();
+        console.log(msg);
+        $("#ace-editor-content").val(msg);
+    }
+
+    function Webhook() {
+        var select_info = new Object();
+        var n = window.location.origin + "/Webhook/?"
+
+
+
+        var keys = Object.keys(select_info);
+        var count = keys.length;
+        var task_name = $("#id_taskdeploy_env option:selected").text();
+
+        select_info["taskdeploy_env"] = $("#id_taskdeploy_env option:selected").val();
+        select_info["task_type"] = $("#id_task_type option:selected").val();
+        select_info["select_k8s_Env"] = $("#id_select_k8s_Env option:selected").val();
+        select_info["select_HostGroup"] = $("#id_select_HostGroup option:selected").val();
+        select_info["select_Custom_Env"] = $("#id_select_Custom_Env option:selected").val();
+        var c = 0;
+        for (var key in select_info) {
+            var value = select_info[key];
+            if (value == "") {
+                continue;
+            }
+
+            c++;
+        }
+        c -= 1;
+
+        var _c = 0;
+
+        for (var key in select_info) {
+            var value = select_info[key];
+            if (value == "") {
+                continue;
+            }
+
+            if (_c == c) {
+                n += key + "=" + value
+            } else {
+                n += key + "=" + value + "&"
+            }
+
+
+            _c++;
+        }
+
+
+
+        $.ajax({
+            type: "POST",
+            url: '/ConfCen/Webhook/',
+            headers: {
+                'X-CSRFToken': csrfToken // 使用JavaScript变量添加CSRF令牌
+            },
+
+            cache: false,
+            dataType: "json",
+            data: {
+                "name": task_name,
+                "url": n,
+                "SECRET": get_random_password(64),
+
+            },
+            success: function (msg) {
+
+                alert(msg.url, msg.SECRET)
+
+                alert(msg.SECRET)
+
+
+
+            }
+        });
+
+
+    }
+
+    // editor.getSession().getValue();
+
+    $("#id_select_Custom_Env").on("change", function () {
+        var Id = $("#id_select_Custom_Env option:selected").val();
+
+
+        if (Id != "") {
+
+            $.ajax({
+                type: "GET",
+                url: '/ConfCen/Custom_Env/' + Id + '/',
+                headers: {
+                    'X-CSRFToken': csrfToken // 使用JavaScript变量添加CSRF令牌
+                },
+
+                cache: false,
+                dataType: "json",
+                data: {
+
+                },
+                success: function (msg) {
+
+                    editor.getSession().setValue(msg.config);
+
+
+
+
+                }
+            });
+
+        } else {
+            editor.getSession().setValue("");
+
+        }
+
+
+    });
+    $("#id_taskdeploy_env").on("change", function () {
+        var Id = $("#id_taskdeploy_env option:selected").val();
+
+        $("#helpDoc").attr("href", "/Doc/show_help/?Id=" + Id);
+
+        $("#taskcreateConfCen").attr("href", "/admin/ConfCen/taskcreate/" + Id + "/change/");
+
+
+
+
+
+        $.ajax({
+            type: "GET",
+            url: '/DeployCen/TaskCreate/' + Id + '/',
+            headers: {
+                'X-CSRFToken': csrfToken // 使用JavaScript变量添加CSRF令牌
+            },
+
+            cache: false,
+            dataType: "json",
+            data: {
+
+            },
+            success: function (msg) {
+
+                $("#id_select_HostGroup").val(msg.HostGroup).prop("selected", true);
+                $("#id_select_k8s_Env").val(msg.k8s_Env).prop("selected", true);
+
+                $("#id_task_type").val(msg.task_type).prop("selected", true);
+
+                $("#id_select_Custom_Env").val(msg.Custom_Env).prop("selected", true);
+                console.log(msg.Custom_Env);
+                if (msg.Custom_Env != null) {
+
+                    $.ajax({
+                        type: "GET",
+                        url: '/ConfCen/Custom_Env/' + msg.Custom_Env + '/',
+                        headers: {
+                            'X-CSRFToken': csrfToken // 使用JavaScript变量添加CSRF令牌
+                        },
+
+                        cache: false,
+                        dataType: "json",
+                        data: {
+
+                        },
+                        success: function (msg) {
+
+                            editor.getSession().setValue(msg.config);
+
+
+
+                        }
+                    });
+                } else {
+
+                    editor.getSession().setValue("");
+
+                }
+
+
+
+
+
+            }
+        });
+
+
+
+    });
+
+   
+
+    //任务删除
+    $('button[name="task_disable"]').click(function () {
+
+        var buttonValue = $(this).val();
+        var span = $(this).find("span")
+        span.attr({ "disabled": true });
+        span.text("删除中");
+
+        $.ajax({
+            type: "DELETE",
+            url: '/DeployCen/TaskDeploy/' + buttonValue + '/task_disable/',
+            headers: {
+                'X-CSRFToken': csrfToken // 使用JavaScript变量添加CSRF令牌
+            },
+
+            cache: false,
+            dataType: "json",
+            data: {
+
+            },
+            success: function (msg) {
+
+
+
+                console.log(msg)
+
+            }
+        });
+
+    });
+
+
+    //回滚
+
+    $('button[name="task_rollback"]').click(function () {
+
+        var buttonValue = $(this).val();
+        var span = $(this).find("span")
+        span.attr({ "disabled": true });
+        span.text("回滚中");
+
+        $.ajax({
+            type: "PUT",
+            url: '/DeployCen/TaskDeploy/' + buttonValue + '/task_rollback/',
+            headers: {
+                'X-CSRFToken': csrfToken // 使用JavaScript变量添加CSRF令牌
+            },
+
+            cache: false,
+            dataType: "json",
+            data: {
+
+            },
+            success: function (msg) {
+
+
+
+                alert("回滚成功")
+
+
+                span.attr({ "disabled": false });
+                span.text("回滚任务");
+
+
+
+            }
+        });
+
+    });
+
+
+</script>
+{% endblock %}
